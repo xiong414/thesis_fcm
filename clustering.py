@@ -96,7 +96,7 @@ def display(model, plot=False, save_pic=False):
         print(name)
 
 
-def build_model(func):
+def build_model(func, progress=True):
     def wrapper(img_addr, sigma, mu=0, epsilon=0.1, iter_max=200, **kwargs):
         start_time = time.time()
         img = cv.imread(img_addr, 0)
@@ -111,10 +111,12 @@ def build_model(func):
             model.iter_membership()
             c_list.append(model.centroids)
             if i < 1:
-                print('{:3}'.format(i), end='\r')
+                if progress:
+                    print('{:3}'.format(i), end='\r')
             else:
                 diff = np.linalg.norm((c_list[i] - c_list[i - 1]), 2)
-                print('{:3}| {:.5f}'.format(i, diff), end='\r')
+                if progress:
+                    print('{:3}| {:.5f}'.format(i, diff), end='\r')
                 if diff <= epsilon:
                     break
         pic = np.reshape(
