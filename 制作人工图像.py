@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # 正方+圆 人工图像
-    pic_shape = [100, 100]
+    pic_shape = [40, 40]
     pic = np.zeros(shape=pic_shape)
     for i in range(pic_shape[0]):
         for j in range(pic_shape[1]):
@@ -27,5 +27,5 @@ if __name__ == '__main__':
                     pic_shape[0] / 4)**2:
                 pic[i][j] = 4
     plt.imshow(pic, cmap=plt.cm.gray)
-    plt.imsave('FCM/pic/artif_pic.png', pic, cmap=plt.cm.gray)
+    plt.imsave('pic/artif_pic_4.png', pic, cmap=plt.cm.gray)
     plt.show()

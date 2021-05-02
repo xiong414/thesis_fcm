@@ -64,30 +64,46 @@ def PSNR(img_ref, img):
     return 10 * np.log10(255**2 / MSE)
 
 
-def display(model, plot=False):
-    print('=' * 5, model.model, 'mu:', model.mu, 'sigma:', model.sigma, '=' * 5)
+def display(model, plot=False, save_pic=False):
+    print('-'*10, 'INDEX', '-'*10)
     print('SA: \t{:.2f} %'.format(model.sa * 100))
     print('PSNR:\t{:.2f}'.format(model.psnr))
     print('time:\t{:.2f} s'.format(model.total_time))
     print('speed:\t{:.5f} r/s'.format(model._iter / model.total_time))
+    print('pic:\t{}'.format(model.pic_name))
 
-    if plot == True:
+    if plot:
         plt.subplot(1, 3, 1)
         plt.imshow(model.pic, cmap=plt.cm.gray)
         plt.subplot(1, 3, 2)
         plt.imshow(model.pic_input, cmap=plt.cm.gray)
         plt.subplot(1, 3, 3)
         plt.imshow(model.pic_output, cmap=plt.cm.gray)
+        print('image show!')
         plt.show()
+
+    if save_pic:
+        addr = 'pic_output/'
+        method = str(model.model)
+        mu = str(model.mu)
+        sigma = str(model.sigma)
+        strtime = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
+        sa = '{:.2f}'.format(model.sa*100)
+        psnr = '{:.2f}'.format(model.psnr)
+        name = method + '_' + mu + '_' + sigma + '_' + strtime + '_' + sa + '_' + psnr + '.png'
+        plt.imsave(addr + name, model.pic_output, cmap='gray')
+        print('image saved!')
+        print(name)
 
 
 def build_model(func):
-    def wrapper(img_addr, sigma, mu=0, epsilon=0.1, iter_max=100, **kwargs):
+    def wrapper(img_addr, sigma, mu=0, epsilon=0.1, iter_max=200, **kwargs):
         start_time = time.time()
         img = cv.imread(img_addr, 0)
         img_array = np.reshape(img, (np.size(img), 1))
         img_noise = gaussian_noise(img, mu=mu, sigma=sigma)
         model = func(x=img_noise, **kwargs)
+        print('='*5, model, 'mu:', mu, 'sigma:', sigma, '='*5)
         model.init_para()
         c_list = []
         for i in range(0, iter_max):
@@ -95,10 +111,10 @@ def build_model(func):
             model.iter_membership()
             c_list.append(model.centroids)
             if i < 1:
-                print('{:3}'.format(i))
+                print('{:3}'.format(i), end='\r')
             else:
                 diff = np.linalg.norm((c_list[i] - c_list[i - 1]), 2)
-                print('{:3}| {:.5f}'.format(i, diff))
+                print('{:3}| {:.5f}'.format(i, diff), end='\r')
                 if diff <= epsilon:
                     break
         pic = np.reshape(
@@ -110,9 +126,9 @@ def build_model(func):
         psnr = PSNR(img_ref=img, img=pic)
         total_time = time.time() - start_time
         m = Model(model=model,
-                  method=model,
                   mu=mu,
                   sigma=sigma,
+                  pic_name=img_addr,
                   pic=img,
                   pic_input=img_noise,
                   pic_output=pic,
@@ -120,17 +136,18 @@ def build_model(func):
                   psnr=psnr,
                   total_time=total_time,
                   _iter=len(c_list))
+        print('', end='\n')
         return m
 
     return wrapper
 
 
 class Model:
-    def __init__(self, model, method, mu, sigma, pic, pic_input, pic_output, sa, psnr, total_time, _iter):
+    def __init__(self, model, mu, sigma, pic_name,  pic, pic_input, pic_output, sa, psnr, total_time, _iter):
         self.model = model
-        self.method = method
         self.mu = mu
         self.sigma = sigma
+        self.pic_name = pic_name
         self.pic = pic
         self.pic_input = pic_input
         self.pic_output = pic_output
@@ -305,6 +322,69 @@ class BFFLICM(FCM):
             for j, c in enumerate(self.centroids):
                 if i % self.img_shape[1] != 0 or i >= self.img_shape[1] or i % (self.img_shape[1] + 1) != 0 or i < (len(self.x) - self.img_shape[1]):
                     new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i) for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
+                else:
+                    new_membership_mat[i][j] = 1. / np.sum((distance_mat[i][j]**2 / (distance_mat[i]**2))**(1 / (self.m - 1)))
+        self.distance_mat = distance_mat
+        self.membership_mat = new_membership_mat
+
+
+class FLICM_1(FCM):
+    def __init__(self, x, m, cluster_num, array_mode=True):
+        if array_mode:
+            self.x = np.reshape(x, (np.size(x), 1))
+        else:
+            self.x = x
+        self.m = m
+        self.cluster_num = cluster_num
+        self.membership_mat = []
+        self.centroids = []
+        self.distance_mat = []
+        self.img_shape = np.shape(x)
+
+    def __repr__(self):
+        return 'FLICM'
+
+    def iter_membership(self):
+        distance_mat = np.zeros(shape=np.shape(self.membership_mat))
+        new_membership_mat = np.zeros(shape=np.shape(self.membership_mat))
+
+        # distance matrix
+        for i, x in enumerate(self.x):
+            for j, c in enumerate(self.centroids):
+                distance_mat[i][j] = np.linalg.norm(x - c, 2)
+
+        # g factor
+        def g(k, i):
+            val = 0
+            i_x, i_y = i // self.img_shape[1], i % self.img_shape[1]
+            i_coo = [i_x, i_y]
+            neighbor_coordinate = []
+            neighbor_array = []
+            if i_coo[0] % self.img_shape[0] != 0 and i_coo[1] % self.img_shape[1] != 0:
+                if i_coo[0] % (self.img_shape[0] - 1) != 0 and i_coo[1] % (self.img_shape[1] - 1) != 0:
+                    neighbor_coordinate.append([i_x - 1, i_y - 1])
+                    neighbor_coordinate.append([i_x - 1, i_y])
+                    neighbor_coordinate.append([i_x - 1, i_y + 1])
+                    neighbor_coordinate.append([i_x, i_y - 1])
+                    neighbor_coordinate.append([i_x, i_y + 1])
+                    neighbor_coordinate.append([i_x + 1, i_y - 1])
+                    neighbor_coordinate.append([i_x + 1, i_y])
+                    neighbor_coordinate.append([i_x + 1, i_y + 1])
+            for n in neighbor_coordinate:
+                neighbor_array.append(n[0] * self.img_shape[1] + n[1])
+            for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
+                # djk = 1. / (np.linalg.norm(np.array(j_coo) - np.array(i_coo)))
+                djk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
+                uikm = ((1 - self.membership_mat[j_arr][k])**self.m)
+                xkvi = (np.linalg.norm(self.x[j_arr] - self.centroids[k], 2))
+                val += djk * uikm * xkvi
+            return val
+
+        # membership matrix
+        for i, x in enumerate(self.x):
+            for j, c in enumerate(self.centroids):
+                if i % self.img_shape[1] != 0 or i >= self.img_shape[1] or i % (self.img_shape[1] + 1) != 0 or i < (len(self.x) - self.img_shape[1]):
+                    new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
                 else:
                     new_membership_mat[i][j] = 1. / np.sum((distance_mat[i][j]**2 / (distance_mat[i]**2))**(1 / (self.m - 1)))
         self.distance_mat = distance_mat
