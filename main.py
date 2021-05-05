@@ -17,23 +17,24 @@ if __name__ == '__main__':
         p = True
 
     start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    strtime = str(time.strftime("%Y%m%d%H%M%S", time.localtime()))
     print(start_time)
 
-    img_addr = 'pic/artif_pic_2.png'
-    model1 = clustering.build_model(clustering.FCM, progress=p)(img_addr=img_addr, mu=0, sigma=20, cluster_num=5, m=2, epsilon=0.01)
-    clustering.display(model1, save_pic=True)
+    # img_addr = 'pic/3096.png'
+    # gt = 'pic/3096_gt.png'
+    img_addr = 'pic/artif_pic_syn_1.png'
 
-    model2 = clustering.build_model(clustering.FLICM, progress=p)(img_addr=img_addr, mu=0, sigma=20, cluster_num=5, m=2, epsilon=0.01)
-    clustering.display(model2, save_pic=True)
+    model1 = clustering.build_model(clustering.FCM, progress=p)(img_addr=img_addr, mu=70, sigma=80, cluster_num=2, m=2, epsilon=0.001)
+    clustering.display(model1, save_pic=1, start_time=strtime, plot=0)
 
-    # model3 = clustering.build_model(clustering.BFFLICM, progress=p)(img_addr=img_addr, mu=0, sigma=40, cluster_num=5, m=2, epsilon=0.01, sigma_d=20, sigma_r=300)
-    # clustering.display(model3, save_pic=True)
+    model2 = clustering.build_model(clustering.FLICM, progress=p)(img_addr=img_addr, mu=70, sigma=80, cluster_num=2, m=2, epsilon=0.001)
+    clustering.display(model2, save_pic=1, start_time=strtime, plot=0)
 
-    model4 = clustering.build_model(clustering.FLICM_1, progress=p)(img_addr=img_addr, mu=0, sigma=20, cluster_num=5, m=2, epsilon=0.01)
-    clustering.display(model4, save_pic=True)
+    model3 = clustering.build_model(clustering.FLICM_S, progress=p)(img_addr=img_addr, mu=70, sigma=80, cluster_num=2, m=2, epsilon=0.001)
+    clustering.display(model3, save_pic=1, start_time=strtime, plot=0)
 
-    model5 = clustering.build_model(clustering.FLICM_2, progress=p)(img_addr=img_addr, mu=0, sigma=20, cluster_num=5, m=2, epsilon=0.01)
-    clustering.display(model5, save_pic=True)
+    model4 = clustering.build_model(clustering.FLICM_SD, progress=p)(img_addr=img_addr, mu=70, sigma=80, cluster_num=2, m=2, epsilon=0.001)
+    clustering.display(model4, save_pic=1, start_time=strtime, plot=0)  
 
     end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print(end_time)
