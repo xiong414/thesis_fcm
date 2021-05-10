@@ -5,13 +5,15 @@
 @Date: 2021-04-28 14:54:46
 @Email: xiong3219@icloud.com
 '''
-
 import os
 import math
 import time
+import warnings
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+
+warnings.filterwarnings("ignore")
 
 
 def gaussian_noise(image, mu, sigma):
@@ -129,7 +131,7 @@ def build_model(func, progress=True):
             psnr = PSNR(img_ref=img, img=pic)
         else:
             pic_gt = cv.imread(ground_truth, 0)
-            pic = np.reshape(repaint_pic(membership=model.membership_mat, centroids=model.centroids, img_ref=pic_gt, rev=True), np.shape(img))
+            pic = np.reshape(repaint_pic(membership=model.membership_mat, centroids=model.centroids, img_ref=pic_gt, rev=0), np.shape(img))
             sa = SA(img_ref=pic_gt, img=pic)
             psnr = PSNR(img_ref=pic_gt, img=pic)
         total_time = time.time() - start_time
@@ -243,16 +245,11 @@ class FLICM(FCM):
             i_coo = [i_x, i_y]
             neighbor_coordinate = []
             neighbor_array = []
-            if i_coo[0] % self.img_shape[0] != 0 and i_coo[1] % self.img_shape[1] != 0:
-                if i_coo[0] % (self.img_shape[0] - 1) != 0 and i_coo[1] % (self.img_shape[1] - 1) != 0:
-                    neighbor_coordinate.append([i_x - 1, i_y - 1])
-                    neighbor_coordinate.append([i_x - 1, i_y])
-                    neighbor_coordinate.append([i_x - 1, i_y + 1])
-                    neighbor_coordinate.append([i_x, i_y - 1])
-                    neighbor_coordinate.append([i_x, i_y + 1])
-                    neighbor_coordinate.append([i_x + 1, i_y - 1])
-                    neighbor_coordinate.append([i_x + 1, i_y])
-                    neighbor_coordinate.append([i_x + 1, i_y + 1])
+            for x in range(i_x - 1, i_x + 2):
+                for y in range(i_y - 1, i_y + 2):
+                    if x != i_x or y != i_y:
+                        if x in [_ for _ in range(0, self.img_shape[0])] and y in [__ for __ in range(0, self.img_shape[1])]:
+                            neighbor_coordinate.append([x, y])
             for n in neighbor_coordinate:
                 neighbor_array.append(n[0] * self.img_shape[1] + n[1])
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
@@ -265,10 +262,7 @@ class FLICM(FCM):
         # membership matrix
         for i, x in enumerate(self.x):
             for j, c in enumerate(self.centroids):
-                if i % self.img_shape[1] != 0 or i >= self.img_shape[1] or i % (self.img_shape[1] + 1) != 0 or i < (len(self.x) - self.img_shape[1]):
-                    new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
-                else:
-                    new_membership_mat[i][j] = 1. / np.sum((distance_mat[i][j]**2 / (distance_mat[i]**2))**(1 / (self.m - 1)))
+                new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
         self.distance_mat = distance_mat
         self.membership_mat = new_membership_mat
 
@@ -305,37 +299,30 @@ class FLICM_S(FCM):
             i_coo = [i_x, i_y]
             neighbor_coordinate = []
             neighbor_array = []
-            if i_coo[0] % self.img_shape[0] != 0 and i_coo[1] % self.img_shape[1] != 0:
-                if i_coo[0] % (self.img_shape[0] - 1) != 0 and i_coo[1] % (self.img_shape[1] - 1) != 0:
-                    neighbor_coordinate.append([i_x - 1, i_y - 1])
-                    neighbor_coordinate.append([i_x - 1, i_y])
-                    neighbor_coordinate.append([i_x - 1, i_y + 1])
-                    neighbor_coordinate.append([i_x, i_y - 1])
-                    neighbor_coordinate.append([i_x, i_y + 1])
-                    neighbor_coordinate.append([i_x + 1, i_y - 1])
-                    neighbor_coordinate.append([i_x + 1, i_y])
-                    neighbor_coordinate.append([i_x + 1, i_y + 1])
+            for x in range(i_x - 1, i_x + 2):
+                for y in range(i_y - 1, i_y + 2):
+                    if x != i_x or y != i_y:
+                        if x in [_ for _ in range(0, self.img_shape[0])] and y in [__ for __ in range(0, self.img_shape[1])]:
+                            neighbor_coordinate.append([x, y])
             for n in neighbor_coordinate:
                 neighbor_array.append(n[0] * self.img_shape[1] + n[1])
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
+                djk = 1. / np.linalg.norm(np.array(j_coo) - np.array(i_coo))
                 sjk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
                 uikm = (1 - self.membership_mat[j_arr][k])**self.m
                 xkvi = np.linalg.norm(self.x[j_arr] - self.centroids[k], 2)
-                val += sjk * uikm * xkvi
+                val += djk * sjk * uikm * xkvi
             return val
 
         # membership matrix
         for i, x in enumerate(self.x):
             for j, c in enumerate(self.centroids):
-                if i % self.img_shape[1] != 0 or i >= self.img_shape[1] or i % (self.img_shape[1] + 1) != 0 or i < (len(self.x) - self.img_shape[1]):
-                    new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
-                else:
-                    new_membership_mat[i][j] = 1. / np.sum((distance_mat[i][j]**2 / (distance_mat[i]**2))**(1 / (self.m - 1)))
+                new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
         self.distance_mat = distance_mat
         self.membership_mat = new_membership_mat
 
 
-class FLICM_SD(FCM):
+class FLICM_SW(FCM):
     def __init__(self, x, m, cluster_num, array_mode=True):
         if array_mode:
             self.x = np.reshape(x, (np.size(x), 1))
@@ -349,7 +336,7 @@ class FLICM_SD(FCM):
         self.img_shape = np.shape(x)
 
     def __repr__(self):
-        return 'FLICM_SD'
+        return 'FLICM_SW'
 
     def iter_membership(self):
         distance_mat = np.zeros(shape=np.shape(self.membership_mat))
@@ -367,32 +354,23 @@ class FLICM_SD(FCM):
             i_coo = [i_x, i_y]
             neighbor_coordinate = []
             neighbor_array = []
-            if i_coo[0] % self.img_shape[0] != 0 and i_coo[1] % self.img_shape[1] != 0:
-                if i_coo[0] % (self.img_shape[0] - 1) != 0 and i_coo[1] % (self.img_shape[1] - 1) != 0:
-                    neighbor_coordinate.append([i_x - 1, i_y - 1])
-                    neighbor_coordinate.append([i_x - 1, i_y])
-                    neighbor_coordinate.append([i_x - 1, i_y + 1])
-                    neighbor_coordinate.append([i_x, i_y - 1])
-                    neighbor_coordinate.append([i_x, i_y + 1])
-                    neighbor_coordinate.append([i_x + 1, i_y - 1])
-                    neighbor_coordinate.append([i_x + 1, i_y])
-                    neighbor_coordinate.append([i_x + 1, i_y + 1])
+            for x in range(i_x - 1, i_x + 2):
+                for y in range(i_y - 1, i_y + 2):
+                    if x != i_x or y != i_y:
+                        if x in [_ for _ in range(0, self.img_shape[0])] and y in [__ for __ in range(0, self.img_shape[1])]:
+                            neighbor_coordinate.append([x, y])
             for n in neighbor_coordinate:
                 neighbor_array.append(n[0] * self.img_shape[1] + n[1])
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
-                djk = 1. / np.linalg.norm(np.array(j_coo) - np.array(i_coo))
                 sjk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
                 uikm = (1 - self.membership_mat[j_arr][k])**self.m
-                xkvi = np.linalg.norm(self.x[j_arr] - self.centroids[k], 2)
-                val += djk * sjk * uikm * xkvi
+                xkvi = 300 * (1 - np.exp(-abs(self.x[j_arr] - self.centroids[k])**2/(0.1)))
+                val += sjk * uikm * xkvi
             return val
 
         # membership matrix
         for i, x in enumerate(self.x):
             for j, c in enumerate(self.centroids):
-                if i % self.img_shape[1] != 0 or i >= self.img_shape[1] or i % (self.img_shape[1] + 1) != 0 or i < (len(self.x) - self.img_shape[1]):
-                    new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
-                else:
-                    new_membership_mat[i][j] = 1. / np.sum((distance_mat[i][j]**2 / (distance_mat[i]**2))**(1 / (self.m - 1)))
+                new_membership_mat[i][j] = 1. / np.sum(((distance_mat[i][j]**2 + g(j, i)) / ((distance_mat[i]**2) + [g(r, i)for r in range(len(self.centroids))])) ** (1 / (self.m - 1)))
         self.distance_mat = distance_mat
         self.membership_mat = new_membership_mat
