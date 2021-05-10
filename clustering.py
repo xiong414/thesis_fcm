@@ -68,7 +68,7 @@ def PSNR(img_ref, img):
     return 10 * np.log10(255**2 / MSE)
 
 
-def display(model, start_time, plot=False, save_pic=False):
+def display(model, start_time, plot=False, save_pic=False, save_noise=False):
     print('-'*10, 'INDEX', '-'*10)
     print('SA: \t{:.2f} %'.format(model.sa * 100))
     print('PSNR:\t{:.2f}'.format(model.psnr))
@@ -99,10 +99,19 @@ def display(model, start_time, plot=False, save_pic=False):
         plt.imsave(addr + start_time + '/' + name, model.pic_output, cmap='gray')
         print('image saved!')
         print(name)
+    
+    if save_noise:
+        addr = 'pic_output/'
+        mu = str(model.mu)
+        sigma = str(model.sigma)
+        name = 'noise_' + mu + '_' + sigma +'.png'
+        if not os.path.exists(addr +start_time):
+            os.makedirs(addr + start_time)
+        plt.imsave(addr + start_time + '/' + name, model.pic_input, cmap='gray')
 
 
 def build_model(func, progress=True):
-    def wrapper(img_addr, mu, sigma, ground_truth=None, epsilon=0.1, iter_max=200, **kwargs):
+    def wrapper(img_addr, mu, sigma, ground_truth=None, epsilon=0.0001, iter_max=200, **kwargs):
         start_time = time.time()
         img = cv.imread(img_addr, 0)
         img_array = np.reshape(img, (np.size(img), 1))
@@ -364,8 +373,9 @@ class FLICM_SW(FCM):
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
                 sjk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
                 uikm = (1 - self.membership_mat[j_arr][k])**self.m
-                xkvi = 300 * (1 - np.exp(-abs(self.x[j_arr] - self.centroids[k])**2/(0.1)))
-                val += sjk * uikm * xkvi
+                xkvi = 1 - np.exp(-abs(self.x[j_arr] - self.centroids[k])**2)
+                coef = np.sqrt(np.var(neighbor_array))
+                val += sjk * uikm * xkvi * coef
             return val
 
         # membership matrix
