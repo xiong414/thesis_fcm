@@ -23,8 +23,11 @@ def gaussian_noise(image, mu, sigma):
             noise = np.random.normal(loc=mu, scale=sigma)
             if int(image[i][j] + noise) > 255:
                 image_output[i][j] = int(image[i][j] - noise)
+            elif int(image[i][j] + noise) < 0:
+                image_output[i][j] = int(image[i][j] - noise)
             else:
                 image_output[i][j] = int(image[i][j] + noise)
+            
     return image_output
 
 
@@ -111,7 +114,7 @@ def display(model, start_time, plot=False, save_pic=False, save_noise=False):
 
 
 def build_model(func, progress=True):
-    def wrapper(img_addr, mu, sigma, ground_truth=None, epsilon=0.0001, iter_max=200, **kwargs):
+    def wrapper(img_addr, mu, sigma, ground_truth=None, epsilon=0.001, iter_max=200, **kwargs):
         start_time = time.time()
         img = cv.imread(img_addr, 0)
         img_array = np.reshape(img, (np.size(img), 1))
@@ -372,9 +375,16 @@ class FLICM_SW(FCM):
                 neighbor_array.append(n[0] * self.img_shape[1] + n[1])
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
                 sjk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
+                # sjk = 1 - np.exp(-abs(self.x[j_arr] - self.x[i])**2)
                 uikm = (1 - self.membership_mat[j_arr][k])**self.m
-                xkvi = 1 - np.exp(-abs(self.x[j_arr] - self.centroids[k])**2)
+                xkvi = 1 - np.exp(-abs(self.x[j_arr] - self.centroids[k])**2/(2 * np.power(10, self.cluster_num) ))
                 coef = np.sqrt(np.var(neighbor_array))
+                # if coef < 50:
+                #     coef = 50
+                # elif coef > 200:
+                #     coef = 200
+                # coef = 300
+                # coef = np.var(neighbor_array)
                 val += sjk * uikm * xkvi * coef
             return val
 

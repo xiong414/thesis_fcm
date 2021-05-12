@@ -31,28 +31,28 @@ if __name__ == '__main__':
     # plt.show()
 
     # 对称二分类图
-    pic_shape = [64, 64]
-    pic = np.zeros(shape=pic_shape)
-    for i in range(pic_shape[0]):
-        for j in range(pic_shape[1]):
-            if j < pic_shape[1] / 2:
-                pic[i][j] = 0
-            else:
-                pic[i][j] = 1
-    plt.imsave('pic/artif_pic_syn_2.png', pic, cmap=plt.cm.gray)
-
-    # 三分类图
-    # pic_shape = [100, 100]
+    # pic_shape = [64, 64]
     # pic = np.zeros(shape=pic_shape)
     # for i in range(pic_shape[0]):
     #     for j in range(pic_shape[1]):
     #         if j < pic_shape[1] / 2:
-    #             if i + j < pic_shape[1]:
-    #                 pic[i][j] = 10
-    #             else:
-    #                 pic[i][j] = 20
+    #             pic[i][j] = 0
     #         else:
-    #             if i > j:
-    #                 pic[i][j] = 20
-    # plt.imsave('pic/artif_pic_tri_1.png', pic, cmap=plt.cm.gray)
+    #             pic[i][j] = 1
+    # plt.imsave('pic/artif_pic_syn_2.png', pic, cmap=plt.cm.gray)
+
+    # 三分类图
+    pic_shape = [50, 50]
+    pic = np.zeros(shape=pic_shape)
+    for i in range(pic_shape[0]):
+        for j in range(pic_shape[1]):
+            if j < pic_shape[1] / 2:
+                if i + j < pic_shape[1]:
+                    pic[i][j] = 1
+                else:
+                    pic[i][j] = 2
+            else:
+                if i > j:
+                    pic[i][j] = 2
+    plt.imsave('pic/artif_pic_tri_2.png', pic, cmap=plt.cm.gray)
 
