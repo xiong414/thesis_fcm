@@ -26,9 +26,7 @@ if __name__ == '__main__':
     #         if (i - pic_shape[0] / 2)**2 + (j - pic_shape[0] / 2)**2 < (
     #                 pic_shape[0] / 4)**2:
     #             pic[i][j] = 4
-    # plt.imshow(pic, cmap=plt.cm.gray)
-    # plt.imsave('pic/artif_pic_4.png', pic, cmap=plt.cm.gray)
-    # plt.show()
+    # plt.imsave('pic/artif_pic_penta_3.png', pic, cmap=plt.cm.gray)
 
     # 对称二分类图
     # pic_shape = [64, 64]
@@ -42,7 +40,7 @@ if __name__ == '__main__':
     # plt.imsave('pic/artif_pic_syn_2.png', pic, cmap=plt.cm.gray)
 
     # 三分类图
-    pic_shape = [50, 50]
+    pic_shape = [35, 35]
     pic = np.zeros(shape=pic_shape)
     for i in range(pic_shape[0]):
         for j in range(pic_shape[1]):
@@ -54,5 +52,5 @@ if __name__ == '__main__':
             else:
                 if i > j:
                     pic[i][j] = 2
-    plt.imsave('pic/artif_pic_tri_2.png', pic, cmap=plt.cm.gray)
+    plt.imsave('pic/artif_pic_tri_3.png', pic, cmap=plt.cm.gray)
 
