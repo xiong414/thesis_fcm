@@ -376,7 +376,7 @@ class FLICM_SW(FCM):
             for j_coo, j_arr in zip(neighbor_coordinate, neighbor_array):
                 sjk = np.linalg.norm(self.x[j_arr]-self.x[i], 2)
                 uikm = (1 - self.membership_mat[j_arr][k])**self.m
-                xkvi = 1 - np.exp((-abs(self.x[j_arr] - self.centroids[k])**2)/np.sum(self.img_shape))
+                xkvi = 1 - np.exp((-abs(self.x[j_arr] - self.centroids[k])**2)/(2 * np.sum(self.img_shape)))
                 coef = np.sqrt(np.var(neighbor_array))
                 val += sjk * uikm * xkvi * coef
             return val

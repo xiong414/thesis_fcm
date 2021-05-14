@@ -25,7 +25,7 @@ if __name__ == '__main__':
     img_addr = 'pic/artif_pic_penta_1.png'
 
     mu = 0
-    sigma = 10
+    sigma = 15
     c = 5
 
     model1 = clustering.build_model(clustering.FCM, progress=p)(img_addr=img_addr, mu=mu, sigma=sigma, cluster_num=c, m=2)
@@ -37,8 +37,8 @@ if __name__ == '__main__':
     model3 = clustering.build_model(clustering.FLICM_S, progress=p)(img_addr=img_addr, mu=mu, sigma=sigma, cluster_num=c, m=2)
     clustering.display(model3, save_pic=1, start_time=strtime, plot=0)
 
-    model4 = clustering.build_model(clustering.FLICM_SW, progress=p)(img_addr=img_addr, mu=mu, sigma=sigma, cluster_num=c, m=2)
-    clustering.display(model4, save_pic=1, start_time=strtime, plot=0)
+    # model4 = clustering.build_model(clustering.FLICM_SW, progress=p)(img_addr=img_addr, mu=mu, sigma=sigma, cluster_num=c, m=2)
+    # clustering.display(model4, save_pic=1, start_time=strtime, plot=0)
 
     end_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     print(end_time)
