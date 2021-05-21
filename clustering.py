@@ -6,7 +6,6 @@
 @Email: xiong3219@icloud.com
 '''
 import os
-import math
 import time
 import warnings
 import cv2 as cv
@@ -117,7 +116,6 @@ def build_model(func, progress=True):
     def wrapper(img_addr, mu, sigma, ground_truth=None, epsilon=0.01, iter_max=200, **kwargs):
         start_time = time.time()
         img = cv.imread(img_addr, 0)
-        img_array = np.reshape(img, (np.size(img), 1))
         img_noise = gaussian_noise(img, mu, sigma)
         model = func(x=img_noise, **kwargs)
         print('='*5, model, 'mu:', mu, 'sigma:', sigma, '='*5)
@@ -279,7 +277,7 @@ class FLICM(FCM):
         self.membership_mat = new_membership_mat
 
 
-class FLICM_S(FCM):
+class FLSICM(FCM):
     def __init__(self, x, m, cluster_num, array_mode=True):
         if array_mode:
             self.x = np.reshape(x, (np.size(x), 1))
@@ -293,7 +291,7 @@ class FLICM_S(FCM):
         self.img_shape = np.shape(x)
 
     def __repr__(self):
-        return 'FLICM_S'
+        return 'FLSICM'
 
     def iter_membership(self):
         distance_mat = np.zeros(shape=np.shape(self.membership_mat))
@@ -334,7 +332,7 @@ class FLICM_S(FCM):
         self.membership_mat = new_membership_mat
 
 
-class FLICM_SW(FCM):
+class WFLSICM(FCM):
     def __init__(self, x, m, cluster_num, array_mode=True):
         if array_mode:
             self.x = np.reshape(x, (np.size(x), 1))
@@ -348,7 +346,7 @@ class FLICM_SW(FCM):
         self.img_shape = np.shape(x)
 
     def __repr__(self):
-        return 'FLICM_SW'
+        return 'WFLSICM'
 
     def iter_membership(self):
         distance_mat = np.zeros(shape=np.shape(self.membership_mat))

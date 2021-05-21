@@ -26,15 +26,31 @@ def neighbor(x, y, img_shape):
 #     val = np.zeros()
 #     for point in n:
 
+def mIoU(img, img_ref):
+    c = list(set(np.reshape(img, np.size(img)).tolist()))
+    val = 0
+    for _ in c:
+        a = 0
+        u = 0
+        for i in range(np.shape(img)[0]):
+            for j in range(np.shape(img)[1]):
+                if img[i][j] == img_ref[i][j] and img[i][j] == _:
+                    a += 1
+                if img[i][j] == _ or img_ref[i][j] == _:
+                    u += 1
+        val += a / u
+    return val / len(c)
+
+
 
 if __name__ == '__main__':
     # pic_addr = 'pic/artif_pic_tri_2.png'
-    pic_addr = 'pic/3096.png'
+    # pic_addr = 'pic/3096.png'
     # pic_addr = '/Users/xiongguoqing/Documents/学习资料-本科/毕业论文/代码/FCM/pic_output/20210511214653/FLICM_SW_0_30__96.41_41.54.png'
-    pic = cv.imread(pic_addr, 0)
+    # pic = cv.imread(pic_addr, 0)
     # pic_shape = np.shape(pic)
-    pic_noise = gaussian_noise(pic, mu=0, sigma=15)
-    plt.imsave('pic_output/noise.png', pic_noise, cmap=plt.cm.gray)
+    # pic_noise = gaussian_noise(pic, mu=0, sigma=15)
+    # plt.imsave('pic_output/noise.png', pic_noise, cmap=plt.cm.gray)
     # vars = []
     # for i in range(pic_shape[0]):
     #     for j in range(pic_shape[1]):
@@ -51,3 +67,9 @@ if __name__ == '__main__':
     # print(np.mean(vars))
     # print(np.sum(np.shape(pic)))
     # print(pic)
+
+    img_ref = cv.imread('pic/artif_pic_syn_1.png', 0)
+    img = cv.imread('/Users/xiongguoqing/Documents/学习资料-本科/毕业论文/重要结果/人工图像-2分类-65/FLICM_S_0_65__99.62_48.29.png', 0)
+    print(mIoU(img, img_ref))
+    # plt.imshow(i, cmap=plt.cm.gray)
+    # plt.show()
